@@ -1,0 +1,77 @@
+const multer = require('multer');
+const sharp = require('sharp');
+const path = require('path');
+const { promises: fsPromises } = require('fs');
+const { uploadImage } = require('../Utils/cloudinary');
+
+const TMP_DIR = path.join(__dirname, '../tmp-uploads');
+
+const ensureDir = async (dir) => {
+  await fsPromises.mkdir(dir, { recursive: true });
+};
+
+// Step 1: accept the file(s) from the form and hold them briefly on disk
+const multerStorage = multer.diskStorage({
+  destination: async (req, file, cb) => {
+    try {
+      await ensureDir(TMP_DIR);
+      cb(null, TMP_DIR);
+    } catch (err) {
+      cb(err);
+    }
+  },
+  filename: (req, file, cb) => {
+    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1e9);
+    cb(null, `${file.fieldname}-${uniqueSuffix}.jpg`);
+  },
+});
+
+const imageFilter = (req, file, cb) => {
+  const allowed = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
+  if (allowed.includes(file.mimetype)) {
+    cb(null, true);
+  } else {
+    cb(new Error('Only JPG, PNG or WEBP images are allowed'), false);
+  }
+};
+
+// Use as: uploadPhotos.array('images', 6)  — field name must match the
+// front end's FormData field, e.g. form.append('images', file)
+const uploadPhotos = multer({
+  storage: multerStorage,
+  fileFilter: imageFilter,
+  limits: { fileSize: 5 * 1024 * 1024 }, // 5MB per image
+});
+
+// Step 2: resize/compress each uploaded file, push it to Cloudinary, then
+// delete the temporary local copy. Leaves req.processedImages as an array
+// of { secure_url, public_id } ready to save on a Mongoose document.
+const resizeAndUpload = async (req, res, next) => {
+  try {
+    if (!req.files || req.files.length === 0) return next();
+
+    const results = await Promise.all(
+      req.files.map(async (file) => {
+        const resizedPath = file.path.replace(/\.jpg$/, '-resized.jpg');
+        await sharp(file.path)
+          .resize(1000, 1000, { fit: 'inside', withoutEnlargement: true })
+          .jpeg({ quality: 82 })
+          .toFile(resizedPath);
+
+        const uploaded = await uploadImage(resizedPath, 'rarwater/products');
+
+        await fsPromises.unlink(file.path).catch(() => {});
+        await fsPromises.unlink(resizedPath).catch(() => {});
+
+        return uploaded ? { secure_url: uploaded.secure_url, public_id: uploaded.public_id } : null;
+      })
+    );
+
+    req.processedImages = results.filter(Boolean);
+    next();
+  } catch (error) {
+    next(error);
+  }
+};
+
+module.exports = { uploadPhotos, resizeAndUpload };
