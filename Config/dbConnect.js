@@ -2,14 +2,12 @@ const mongoose = require('mongoose');
 
 const dbConnect = async () => {
   try {
-    await mongoose.connect(process.env.DATABASE_URI, {
-      useNewUrlParser: true,
-      useUnifiedTopology: true
-    });
+    if (!process.env.DATABASE_URI) throw new Error('DATABASE_URI is not configured');
+    await mongoose.connect(process.env.DATABASE_URI);
     console.log('MongoDB connected');
   } catch (err) {
-    console.error('MongoDB connection error:', err);
-    process.exit(1);
+    console.error('MongoDB connection error:', err.message);
+    throw err;
   }
 };
 

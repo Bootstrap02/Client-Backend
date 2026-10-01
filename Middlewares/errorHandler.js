@@ -5,9 +5,14 @@ const notFound = (req, res, next) => {
 };
 
 const errorHandler = (err, req, res, next) => {
-  const statusCode = res.statusCode === 200 ? 500 : res.statusCode;
+  let statusCode = err?.statusCode || err?.status || (res.statusCode === 200 ? 500 : res.statusCode);
+  if (err?.name === 'ValidationError' || err?.name === 'CastError') statusCode = 400;
+  if (err?.code === 11000) statusCode = 409;
+  const message = statusCode >= 500
+    ? 'Something went wrong'
+    : err?.message || 'Something went wrong';
   res.status(statusCode).json({
-    message: err?.message || 'Something went wrong',
+    message,
     // Only show the stack trace outside production, to avoid leaking details publicly
     stack: process.env.NODE_ENV === 'production' ? undefined : err?.stack,
   });

@@ -1,20 +1,30 @@
-// Only these front-ends are allowed to call the API from a browser.
-// Add the real rositawaters.com addresses (and any admin panel address)
-// to ALLOWED_ORIGINS in your .env once you have them.
-const whiteList = (process.env.ALLOWED_ORIGINS || '')
+const knownOrigins = [
+  'https://rositawaters.com',
+  'https://www.rositawaters.com',
+  'https://rosita-waters-react.vercel.app',
+  'https://rosita-waters.vercel.app',
+  'https://campusify.net',
+];
+
+const whiteList = [
+  ...knownOrigins,
+  ...(process.env.ALLOWED_ORIGINS || '')
   .split(',')
   .map((s) => s.trim())
-  .filter(Boolean);
+  .filter(Boolean),
+  ...(process.env.NODE_ENV !== 'production'
+    ? ['http://localhost:3000', 'http://localhost:5173']
+    : []),
+];
 
 const corsOptions = {
   origin: (origin, callback) => {
-    // "!origin" allows tools like Postman/curl and same-server requests
-    if (!origin || whiteList.length === 0 || whiteList.indexOf(origin) !== -1) {
-      callback(null, true);
-    } else {
-      callback(new Error('Not allowed by CORS'));
-    }
+    if (!origin || whiteList.includes(origin)) return callback(null, true);
+    const error = new Error('Not allowed by CORS');
+    error.status = 403;
+    return callback(error);
   },
+  credentials: true,
   optionsSuccessStatus: 200,
 };
 

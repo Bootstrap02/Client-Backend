@@ -6,10 +6,16 @@ const mongoose = require('mongoose');
 // front end forms use — no schema change needed to add a new text field.
 const contentSchema = new mongoose.Schema(
   {
-    section: { type: String, required: true, unique: true, lowercase: true, trim: true },
+    tenantId: { type: mongoose.Schema.Types.ObjectId, ref: 'Tenant', required: true },
+    section: { type: String, required: true, lowercase: true, trim: true },
     data: { type: mongoose.Schema.Types.Mixed, default: {} },
   },
   { timestamps: true }
+);
+
+contentSchema.index(
+  { tenantId: 1, section: 1 },
+  { unique: true, name: 'tenant_section_unique' }
 );
 
 module.exports = mongoose.model('Content', contentSchema);

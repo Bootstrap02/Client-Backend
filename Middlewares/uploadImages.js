@@ -53,21 +53,24 @@ const resizeAndUpload = async (req, res, next) => {
     const results = await Promise.all(
       req.files.map(async (file) => {
         const resizedPath = file.path.replace(/\.jpg$/, '-resized.jpg');
-        await sharp(file.path)
-          .resize(1000, 1000, { fit: 'inside', withoutEnlargement: true })
-          .jpeg({ quality: 82 })
-          .toFile(resizedPath);
+        try {
+          await sharp(file.path)
+            .resize(1000, 1000, { fit: 'inside', withoutEnlargement: true })
+            .jpeg({ quality: 82 })
+            .toFile(resizedPath);
 
-        const uploaded = await uploadImage(resizedPath, 'rarwater/products');
-
-        await fsPromises.unlink(file.path).catch(() => {});
-        await fsPromises.unlink(resizedPath).catch(() => {});
-
-        return uploaded ? { secure_url: uploaded.secure_url, public_id: uploaded.public_id } : null;
+          const uploaded = await uploadImage(resizedPath, 'products', req.tenant);
+          return { secure_url: uploaded.secure_url, public_id: uploaded.public_id };
+        } finally {
+          await Promise.all([
+            fsPromises.unlink(file.path).catch(() => {}),
+            fsPromises.unlink(resizedPath).catch(() => {}),
+          ]);
+        }
       })
     );
 
-    req.processedImages = results.filter(Boolean);
+    req.processedImages = results;
     next();
   } catch (error) {
     next(error);

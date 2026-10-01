@@ -11,12 +11,16 @@ const { notFound, errorHandler } = require('./Middlewares/errorHandler');
 const productRoutes = require('./Routes/productRoutes');
 const contentRoutes = require('./Routes/contentRoutes');
 const orderRoutes = require('./Routes/orderRoutes');
+const authRoutes = require('./Routes/authRoutes');
+const adminRoutes = require('./Routes/adminRoutes');
+const tenantRoutes = require('./Routes/tenantRoutes');
+const platformRoutes = require('./Routes/platformRoutes');
+const { ensureOwnerAccount, validateOwnerBootstrapConfig } = require('./Utils/adminBootstrap');
 
 const app = express();
 const PORT = process.env.PORT || 5000;
 
-dbConnect();
-
+app.set('trust proxy', 1);
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
@@ -25,6 +29,10 @@ app.use(cors(corsOptions));
 
 app.get('/', (req, res) => res.json({ status: 'Rar Water API is running' }));
 
+app.use('/api/auth', authRoutes);
+app.use('/api/admins', adminRoutes);
+app.use('/api/tenant', tenantRoutes);
+app.use('/api/platform', platformRoutes);
 app.use('/api/products', productRoutes);
 app.use('/api/content', contentRoutes);
 app.use('/api/orders', orderRoutes);
@@ -32,6 +40,28 @@ app.use('/api/orders', orderRoutes);
 app.use(notFound);
 app.use(errorHandler);
 
-app.listen(PORT, () => console.log(`Rar Water API running on port ${PORT}`));
+const start = async () => {
+  validateOwnerBootstrapConfig();
+  await dbConnect();
+  await ensureOwnerAccount();
+  app.listen(PORT, () => console.log(`Rar Water API running on port ${PORT}`));
+};
+
+if (require.main === module) {
+  start().catch((error) => {
+    console.error('Rar Water API startup failed:', error.message);
+    process.exitCode = 1;
+  });
+} else {
+  try {
+    validateOwnerBootstrapConfig();
+  } catch (error) {
+    console.error('Rar Water API initialization failed:', error.message);
+    throw error;
+  }
+  dbConnect()
+    .then(ensureOwnerAccount)
+    .catch((error) => console.error('Rar Water API initialization failed:', error.message));
+}
 
 module.exports = app; // exported so Vercel's serverless function can use it

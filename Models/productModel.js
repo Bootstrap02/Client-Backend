@@ -2,6 +2,7 @@ const mongoose = require('mongoose');
 
 const productSchema = new mongoose.Schema(
   {
+    tenantId: { type: mongoose.Schema.Types.ObjectId, ref: 'Tenant', required: true, index: true },
     name: { type: String, required: true, trim: true },
     slug: { type: String, required: true, lowercase: true, index: true },
     category: {
@@ -24,5 +25,7 @@ const productSchema = new mongoose.Schema(
   },
   { timestamps: true }
 );
+
+productSchema.index({ tenantId: 1, slug: 1 });
 
 module.exports = mongoose.model('Product', productSchema);

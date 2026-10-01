@@ -13,6 +13,7 @@ const orderItemSchema = new mongoose.Schema(
 
 const orderSchema = new mongoose.Schema(
   {
+    tenantId: { type: mongoose.Schema.Types.ObjectId, ref: 'Tenant', required: true, index: true },
     ref: { type: String, required: true, unique: true }, // e.g. "RAR-ABC123"
     customer: {
       name: { type: String, required: true },
@@ -27,6 +28,10 @@ const orderSchema = new mongoose.Schema(
       type: String,
       enum: ['new', 'confirmed', 'fulfilled', 'cancelled'],
       default: 'new',
+    },
+    notificationStatus: {
+      email: { type: String, enum: ['sent', 'failed', 'not_configured'], default: 'not_configured' },
+      whatsapp: { type: String, enum: ['sent', 'failed', 'not_configured'], default: 'not_configured' },
     },
   },
   { timestamps: true }

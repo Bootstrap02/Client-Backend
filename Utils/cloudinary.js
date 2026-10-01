@@ -1,42 +1,53 @@
 const cloudinary = require('cloudinary').v2;
+const { getTenantEnv } = require('./tenantConfig');
 
-cloudinary.config({
-  secure: true
-});
+const tenantCloudinaryOptions = (tenant) => {
+  if (!tenant) throw new Error('Tenant context is required for image storage.');
+  const urlValue = getTenantEnv(tenant, 'CLOUDINARY_URL', { allowDefaultFallback: true });
+  if (!urlValue) throw new Error(`Image storage is not configured for tenant "${tenant.key}".`);
+
+  let url;
+  try {
+    url = new URL(urlValue);
+  } catch {
+    throw new Error(`Image storage configuration is invalid for tenant "${tenant.key}".`);
+  }
+  if (url.protocol !== 'cloudinary:' || !url.hostname || !url.username || !url.password) {
+    throw new Error(`Image storage configuration is invalid for tenant "${tenant.key}".`);
+  }
+  return {
+    cloud_name: url.hostname,
+    api_key: decodeURIComponent(url.username),
+    api_secret: decodeURIComponent(url.password),
+    secure: true,
+  };
+};
 
 // Uploads one local file (already resized by sharp) to Cloudinary,
-// inside a "rarwater" folder so it's easy to find in the dashboard.
-const uploadImage = async (imagePath, folder = 'rarwater') => {
+// inside a tenant-specific folder.
+const uploadImage = async (imagePath, folder = 'products', tenant) => {
+  const tenantOptions = tenantCloudinaryOptions(tenant);
   const options = {
-    folder,
+    ...tenantOptions,
+    folder: `${tenant.key}/${folder}`,
     use_filename: true,
     unique_filename: true,
     overwrite: false,
   };
 
-  try {
-    const result = await cloudinary.uploader.upload(imagePath, options);
-    return {
-      secure_url: result.secure_url,
-      public_id: result.public_id,
-      asset_id: result.asset_id,
-    };
-  } catch (error) {
-    console.error('Error uploading image to Cloudinary:', error);
-    return null;
-  }
+  const result = await cloudinary.uploader.upload(imagePath, options);
+  return {
+    secure_url: result.secure_url,
+    public_id: result.public_id,
+    asset_id: result.asset_id,
+  };
 };
 
 // Removes one image from Cloudinary by its public_id (stored alongside the
 // product/content record so it can be cleaned up when replaced or deleted).
-const deleteImage = async (publicId) => {
+const deleteImage = async (publicId, tenant) => {
   if (!publicId) return null;
-  try {
-    return await cloudinary.uploader.destroy(publicId);
-  } catch (error) {
-    console.error('Error deleting image from Cloudinary:', error);
-    return null;
-  }
+  return cloudinary.uploader.destroy(publicId, tenantCloudinaryOptions(tenant));
 };
 
 module.exports = { cloudinary, uploadImage, deleteImage };
