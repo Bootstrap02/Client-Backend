@@ -1,9 +1,22 @@
+
 const { getTenantEnv } = require('./tenantConfig');
 
-const getTenantEmailConfig = (tenant) => ({
-  apiKey: getTenantEnv(tenant, 'RESEND_API_KEY'),
-  fromEmail: getTenantEnv(tenant, 'RESEND_FROM_EMAIL'),
-});
+// Email sender resolution:
+//  1. If the tenant has its OWN Resend key + from address
+//     (TENANT_<KEY>_RESEND_API_KEY / TENANT_<KEY>_RESEND_FROM_EMAIL), use those.
+//  2. Otherwise use the platform owner's sender
+//     (PLATFORM_RESEND_API_KEY / PLATFORM_RESEND_FROM_EMAIL).
+// The key and from-address always come from the same source, so a tenant's
+// address is never paired with the platform's key (or the other way round).
+const getTenantEmailConfig = (tenant) => {
+  const tenantKey = getTenantEnv(tenant, 'RESEND_API_KEY');
+  const tenantFrom = getTenantEnv(tenant, 'RESEND_FROM_EMAIL');
+  if (tenantKey && tenantFrom) return { apiKey: tenantKey, fromEmail: tenantFrom };
+  return {
+    apiKey: process.env.PLATFORM_RESEND_API_KEY,
+    fromEmail: process.env.PLATFORM_RESEND_FROM_EMAIL,
+  };
+};
 
 const sendTenantEmail = async (tenant, { to, subject, html, text }) => {
   const { apiKey, fromEmail } = getTenantEmailConfig(tenant);
