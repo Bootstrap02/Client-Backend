@@ -11,13 +11,13 @@ const {
 } = require('../Controllers/productController');
 
 const adminAuth = require('../Middlewares/adminAuth');
-const { resolvePublicTenant } = require('../Middlewares/resolveTenant');
+const { resolveTenantOrAdmin } = require('../Middlewares/resolveTenant');
 const validateMongoDBId = require('../Middlewares/validateMongoDBId');
 const { uploadPhotos, resizeAndUpload } = require('../Middlewares/uploadImages');
 
 // Public — used by the main website
-router.get('/', resolvePublicTenant, getProducts);
-router.get('/:id', resolvePublicTenant, validateMongoDBId, getProduct);
+router.get('/', resolveTenantOrAdmin, getProducts);
+router.get('/:id', resolveTenantOrAdmin, validateMongoDBId, getProduct);
 
 // Admin only — used by the admin panel
 router.post('/', adminAuth, uploadPhotos.array('images', 6), resizeAndUpload, createProduct);

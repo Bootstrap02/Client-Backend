@@ -137,3 +137,15 @@ channel as `sent`, `failed`, or `not_configured`.
 
 Successful password resets revoke existing sessions. Logging out also revokes
 the server-side session immediately.
+
+## Added in the integration pass
+
+| Method and path | Access | Purpose |
+|---|---|---|
+| `GET /api/site` | Public (by website origin) | Everything the storefront needs on load: config, all content sections, products |
+| `POST /api/tenant/admin-config/images/:key` | Admin | Upload logo / hero / about / category images (multipart field `images`) |
+
+`GET /api/products` and `GET /api/content` accept either a registered storefront
+origin or a signed-in admin session, so the admin portal (a different domain) can read them.
+Forgot password uses the existing three calls: `forgot-password` (email) → `verify-otp`
+(email + code) → `reset-password` (token + new password); the admin UI chains them.

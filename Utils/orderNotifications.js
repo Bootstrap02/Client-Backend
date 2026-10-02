@@ -22,7 +22,8 @@ const orderText = (order) => [
 
 const sendEmail = async (tenant, order) => {
   const { apiKey, fromEmail } = getTenantEmailConfig(tenant);
-  const toEmail = getTenantEnv(tenant, 'ORDER_NOTIFICATION_EMAIL');
+  const toEmail = getTenantEnv(tenant, 'ORDER_NOTIFICATION_EMAIL')
+    || (tenant.key === (process.env.DEFAULT_TENANT_KEY || 'rosita-waters') ? process.env.OWNER_EMAIL : undefined);
   if (!apiKey || !fromEmail || !toEmail) return 'not_configured';
 
   const items = order.items.map((item) =>

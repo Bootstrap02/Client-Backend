@@ -27,4 +27,13 @@ const resolvePublicTenant = async (req, res, next) => {
   }
 };
 
-module.exports = { resolvePublicTenant };
+// The admin panel lives on its own domain (not a registered storefront domain), so
+// read-only routes shared with the storefront accept EITHER a valid admin session
+// cookie OR a registered website origin.
+const adminAuth = require('./adminAuth');
+const resolveTenantOrAdmin = (req, res, next) => {
+  if (req.cookies?.rar_admin_session) return adminAuth(req, res, next);
+  return resolvePublicTenant(req, res, next);
+};
+
+module.exports = { resolvePublicTenant, resolveTenantOrAdmin };

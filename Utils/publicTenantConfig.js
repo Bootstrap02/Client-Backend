@@ -55,4 +55,4 @@ const sanitizePublicContent = (value) => {
   );
 };
 
-module.exports = { sanitizePublicConfig, sanitizePublicContent };
+module.exports = { sanitizePublicConfig, sanitizePublicContent, IMAGE_FIELDS };

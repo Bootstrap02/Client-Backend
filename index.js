@@ -15,6 +15,7 @@ const authRoutes = require('./Routes/authRoutes');
 const adminRoutes = require('./Routes/adminRoutes');
 const tenantRoutes = require('./Routes/tenantRoutes');
 const platformRoutes = require('./Routes/platformRoutes');
+const siteRoutes = require('./Routes/siteRoutes');
 const { ensureOwnerAccount, validateOwnerBootstrapConfig } = require('./Utils/adminBootstrap');
 
 const app = express();
@@ -27,10 +28,11 @@ app.use(cookieParser());
 app.use(morgan('dev'));
 app.use(cors(corsOptions));
 
-app.get('/', (req, res) => res.json({ status: 'Rar Water API is running' }));
+app.get('/', (req, res) => res.json({ status: 'Client API is running' }));
 
 app.use('/api/auth', authRoutes);
 app.use('/api/admins', adminRoutes);
+app.use('/api/site', siteRoutes);
 app.use('/api/tenant', tenantRoutes);
 app.use('/api/platform', platformRoutes);
 app.use('/api/products', productRoutes);

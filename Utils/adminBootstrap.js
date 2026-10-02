@@ -37,6 +37,21 @@ const ensureDefaultTenant = async () => {
     { $setOnInsert: { key, name, active: true }, $addToSet: { domains: { $each: configuredDomains() } } },
     { new: true, upsert: true, setDefaultsOnInsert: true }
   );
+  // Dummy contact details so a brand-new site works end to end. The owner can
+  // replace all of these from the admin panel's Website settings.
+  await Tenant.updateOne(
+    { _id: tenant._id, 'publicConfig.whatsapp': { $exists: false } },
+    {
+      $set: {
+        'publicConfig.whatsapp': process.env.DEFAULT_WHATSAPP_NUMBER || '2348000000000',
+        'publicConfig.phones': ['08000000000'],
+        'publicConfig.brand': name,
+        'publicConfig.company': name,
+        'publicConfig.currency': '\u20A6',
+        'publicConfig.showPrices': true,
+      },
+    }
+  );
   return tenant;
 };
 

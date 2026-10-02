@@ -1,10 +1,11 @@
 const multer = require('multer');
 const sharp = require('sharp');
 const path = require('path');
+const os = require('os');
 const { promises: fsPromises } = require('fs');
 const { uploadImage } = require('../Utils/cloudinary');
 
-const TMP_DIR = path.join(__dirname, '../tmp-uploads');
+const TMP_DIR = path.join(os.tmpdir(), 'client-backend-uploads');
 
 const ensureDir = async (dir) => {
   await fsPromises.mkdir(dir, { recursive: true });
@@ -52,14 +53,15 @@ const resizeAndUpload = async (req, res, next) => {
 
     const results = await Promise.all(
       req.files.map(async (file) => {
-        const resizedPath = file.path.replace(/\.jpg$/, '-resized.jpg');
+        const keepPng = Boolean(req.keepPng); // logos keep transparency
+        const resizedPath = file.path.replace(/\.jpg$/, keepPng ? '-resized.png' : '-resized.jpg');
         try {
-          await sharp(file.path)
-            .resize(1000, 1000, { fit: 'inside', withoutEnlargement: true })
-            .jpeg({ quality: 82 })
+          const pipeline = sharp(file.path)
+            .resize(1600, 1600, { fit: 'inside', withoutEnlargement: true });
+          await (keepPng ? pipeline.png({ compressionLevel: 9 }) : pipeline.jpeg({ quality: 82 }))
             .toFile(resizedPath);
 
-          const uploaded = await uploadImage(resizedPath, 'products', req.tenant);
+          const uploaded = await uploadImage(resizedPath, req.uploadFolder || 'products', req.tenant);
           return { secure_url: uploaded.secure_url, public_id: uploaded.public_id };
         } finally {
           await Promise.all([
