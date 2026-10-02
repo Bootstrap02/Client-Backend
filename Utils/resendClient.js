@@ -11,10 +11,11 @@ const { getTenantEnv } = require('./tenantConfig');
 const getTenantEmailConfig = (tenant) => {
   const tenantKey = getTenantEnv(tenant, 'RESEND_API_KEY');
   const tenantFrom = getTenantEnv(tenant, 'RESEND_FROM_EMAIL');
-  if (tenantKey && tenantFrom) return { apiKey: tenantKey, fromEmail: tenantFrom };
+  if (tenantKey && tenantFrom) return { apiKey: tenantKey, fromEmail: tenantFrom, isPlatform: false };
   return {
     apiKey: process.env.PLATFORM_RESEND_API_KEY,
     fromEmail: process.env.PLATFORM_RESEND_FROM_EMAIL,
+    isPlatform: true,
   };
 };
 
