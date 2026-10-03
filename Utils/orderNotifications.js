@@ -22,7 +22,11 @@ const orderText = (order) => [
 
 const sendEmail = async (tenant, order) => {
   const { apiKey, fromEmail } = getTenantEmailConfig(tenant);
+  // Order alerts go to: a tenant-specific env override, else the email saved on
+  // the tenant's site settings, else (default tenant only) the platform owner.
+  const configEmail = typeof tenant.publicConfig?.email === 'string' ? tenant.publicConfig.email.trim() : '';
   const toEmail = getTenantEnv(tenant, 'ORDER_NOTIFICATION_EMAIL')
+    || configEmail
     || (tenant.key === (process.env.DEFAULT_TENANT_KEY || 'rosita-waters') ? process.env.OWNER_EMAIL : undefined);
   if (!apiKey || !fromEmail || !toEmail) return 'not_configured';
 
@@ -83,3 +87,4 @@ const notifyOrder = async (tenant, order) => {
 };
 
 module.exports = { notifyOrder };
+
