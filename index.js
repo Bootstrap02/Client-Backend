@@ -46,24 +46,24 @@ const start = async () => {
   validateOwnerBootstrapConfig();
   await dbConnect();
   await ensureOwnerAccount();
-  app.listen(PORT, () => console.log(`Rar Water API running on port ${PORT}`));
+  app.listen(PORT, () => console.log(`Client-Backend API running on port ${PORT}`));
 };
 
 if (require.main === module) {
   start().catch((error) => {
-    console.error('Rar Water API startup failed:', error.message);
+    console.error('Client-Backend API startup failed:', error.message);
     process.exitCode = 1;
   });
 } else {
   try {
     validateOwnerBootstrapConfig();
   } catch (error) {
-    console.error('Rar Water API initialization failed:', error.message);
+    console.error('Client-Backend API initialization failed:', error.message);
     throw error;
   }
   dbConnect()
     .then(ensureOwnerAccount)
-    .catch((error) => console.error('Rar Water API initialization failed:', error.message));
+    .catch((error) => console.error('Client-Backend API initialization failed:', error.message));
 }
 
 module.exports = app; // exported so Vercel's serverless function can use it
