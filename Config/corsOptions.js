@@ -3,6 +3,7 @@ const knownOrigins = [
   'https://www.rositawaters.com',
   'https://rosita-waters-react.vercel.app',
   'https://rosita-waters.vercel.app',
+  'https://rosita-waters-admin.vercel.app',
   'https://campusify.net',
 ];
 
