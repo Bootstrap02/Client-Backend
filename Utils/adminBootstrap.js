@@ -12,9 +12,9 @@ const configuredDomains = () => {
     .split(',')
     .map((domain) => domain.trim())
     .filter(Boolean);
-  if (process.env.NODE_ENV !== 'production') {
-    values.push('localhost', '127.0.0.1');
-  }
+  // if (process.env.NODE_ENV !== 'production') {
+  //   values.push('localhost', '127.0.0.1');
+  // }
   return [...new Set(values.map((value) => {
     try {
       return new URL(value.includes('://') ? value : `https://${value}`).hostname.toLowerCase();
@@ -43,8 +43,8 @@ const ensureDefaultTenant = async () => {
     { _id: tenant._id, 'publicConfig.whatsapp': { $exists: false } },
     {
       $set: {
-        'publicConfig.whatsapp': process.env.DEFAULT_WHATSAPP_NUMBER || '2348000000000',
-        'publicConfig.phones': ['08000000000'],
+        'publicConfig.whatsapp': process.env.DEFAULT_WHATSAPP_NUMBER || '2349069412463',
+        'publicConfig.phones': ['07042380116'],
         'publicConfig.brand': name,
         'publicConfig.company': name,
         'publicConfig.currency': '\u20A6',
