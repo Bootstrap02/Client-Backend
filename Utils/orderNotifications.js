@@ -1,3 +1,4 @@
+
 const { getTenantEmailConfig, sendTenantEmail } = require('./resendClient');
 const { getTenantEnv } = require('./tenantConfig');
 
@@ -14,6 +15,7 @@ const orderText = (order) => [
   `Order ${order.ref}`,
   `Customer: ${order.customer.name}`,
   `Phone: ${order.customer.phone}`,
+  order.customer.email ? `Email: ${order.customer.email}` : '',
   order.customer.mode === 'pickup' ? 'Pickup' : `Delivery address: ${order.customer.address}`,
   ...order.items.map((item) => `${item.qty} x ${item.name} (${item.pack}) - NGN ${item.unitPrice * item.qty}`),
   `Total: NGN ${order.total}`,
@@ -37,7 +39,7 @@ const sendEmail = async (tenant, order) => {
   await sendTenantEmail(tenant, {
     to: [toEmail],
     subject: `${tenant.name} order ${order.ref}`,
-    html: `<h2>New order ${escapeHtml(order.ref)}</h2><p>${escapeHtml(customer.name)} — ${escapeHtml(customer.phone)}</p><p>${customer.mode === 'pickup' ? 'Pickup' : `Delivery: ${escapeHtml(customer.address)}`}</p><ul>${items}</ul><p>Total: NGN ${order.total}</p><p>${escapeHtml(customer.note || '')}</p>`,
+    html: `<h2>New order ${escapeHtml(order.ref)}</h2><p>${escapeHtml(customer.name)} — ${escapeHtml(customer.phone)}${customer.email ? ` — ${escapeHtml(customer.email)}` : ''}</p><p>${customer.mode === 'pickup' ? 'Pickup' : `Delivery: ${escapeHtml(customer.address)}`}</p><ul>${items}</ul><p>Total: NGN ${order.total}</p><p>${escapeHtml(customer.note || '')}</p>`,
     text: orderText(order),
   });
   return 'sent';
@@ -46,7 +48,8 @@ const sendEmail = async (tenant, order) => {
 const sendWhatsApp = async (tenant, order) => {
   const accessToken = getTenantEnv(tenant, 'WHATSAPP_ACCESS_TOKEN');
   const phoneNumberId = getTenantEnv(tenant, 'WHATSAPP_PHONE_NUMBER_ID');
-  const recipient = getTenantEnv(tenant, 'WHATSAPP_ORDER_RECIPIENT');
+  const recipient = getTenantEnv(tenant, 'WHATSAPP_ORDER_RECIPIENT')
+    || (typeof tenant.publicConfig?.whatsapp === 'string' ? tenant.publicConfig.whatsapp.replace(/\D/g, '') : '');
   if (!accessToken || !phoneNumberId || !recipient) return 'not_configured';
 
   const version = getTenantEnv(tenant, 'WHATSAPP_API_VERSION') || 'v20.0';
@@ -87,4 +90,3 @@ const notifyOrder = async (tenant, order) => {
 };
 
 module.exports = { notifyOrder };
-
