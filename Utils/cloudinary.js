@@ -1,4 +1,3 @@
-
 const cloudinary = require('cloudinary').v2;
 const { getTenantEnv } = require('./tenantConfig');
 
@@ -57,3 +56,4 @@ const deleteImage = async (publicId, tenant) => {
 };
 
 module.exports = { cloudinary, uploadImage, deleteImage };
+
