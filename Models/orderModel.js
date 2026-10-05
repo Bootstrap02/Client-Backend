@@ -18,6 +18,7 @@ const orderSchema = new mongoose.Schema(
     customer: {
       name: { type: String, required: true },
       phone: { type: String, required: true },
+      email: { type: String, default: '' },
       mode: { type: String, enum: ['delivery', 'pickup'], default: 'delivery' },
       address: { type: String, default: '' },
       note: { type: String, default: '' },
@@ -38,3 +39,4 @@ const orderSchema = new mongoose.Schema(
 );
 
 module.exports = mongoose.model('Order', orderSchema);
+
