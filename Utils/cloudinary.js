@@ -1,9 +1,15 @@
+
 const cloudinary = require('cloudinary').v2;
 const { getTenantEnv } = require('./tenantConfig');
 
 const tenantCloudinaryOptions = (tenant) => {
   if (!tenant) throw new Error('Tenant context is required for image storage.');
-  const urlValue = getTenantEnv(tenant, 'CLOUDINARY_URL', { allowDefaultFallback: true });
+  // A tenant may have its own Cloudinary account (TENANT_<KEY>_CLOUDINARY_URL).
+  // Otherwise every tenant shares the platform account; images are kept apart
+  // by the per-tenant folder used in uploadImage ("<tenant-key>/<folder>").
+  const urlValue = getTenantEnv(tenant, 'CLOUDINARY_URL')
+    || process.env.PLATFORM_CLOUDINARY_URL
+    || process.env.CLOUDINARY_URL;
   if (!urlValue) throw new Error(`Image storage is not configured for tenant "${tenant.key}".`);
 
   let url;
