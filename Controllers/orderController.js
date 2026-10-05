@@ -1,3 +1,4 @@
+
 const asyncHandler = require('express-async-handler');
 const crypto = require('crypto');
 const Order = require('../Models/orderModel');
@@ -23,6 +24,10 @@ const createOrder = asyncHandler(async (req, res) => {
     return res.status(400).json({ success: false, message: 'customer name, phone and at least one item are required' });
   }
 
+  const email = typeof customer.email === 'string' ? customer.email.trim() : '';
+  if (email && (email.length > 200 || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email))) {
+    return res.status(400).json({ success: false, message: 'The email address is not valid.' });
+  }
   const mode = customer.mode === 'pickup' ? 'pickup' : 'delivery';
   const address = typeof customer.address === 'string' ? customer.address.trim() : '';
   const note = typeof customer.note === 'string' ? customer.note.trim() : '';
@@ -69,6 +74,7 @@ const createOrder = asyncHandler(async (req, res) => {
     customer: {
       name: customer.name.trim(),
       phone: customer.phone.trim(),
+      email,
       mode,
       address,
       note,
